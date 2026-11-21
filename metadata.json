@@ -1,0 +1,6 @@
+{
+  "name": "RelayGate — Personal AI API Router",
+  "description": "Zero-disk personal AI API router with AES-GCM IndexedDB vault, multi-surface OpenAI/Anthropic/Gemini compatibility, automatic 429/5xx failover, and 29+ free-tier AI providers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
