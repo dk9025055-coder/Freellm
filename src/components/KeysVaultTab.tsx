@@ -635,6 +635,17 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
               placeholder="ROUTER_MASTER_KEY"
               className="w-44 px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
+            <button
+              type="button"
+              onClick={() => {
+                const stored = localStorage.getItem('relaygate-master-key') || '';
+                onMasterKeyChange(stored);
+              }}
+              className="px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md whitespace-nowrap"
+              title="Reset to the saved default master key"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
