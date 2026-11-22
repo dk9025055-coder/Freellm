@@ -114,6 +114,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
   const [editingCustomModelsId, setEditingCustomModelsId] = useState<string | null>(null);
   const [editingCustomModelsValue, setEditingCustomModelsValue] = useState('');
   const [inlineModelInput, setInlineModelInput] = useState<Record<string, string>>({});
+  const defaultMasterKeyRef = useRef(masterKey);
 
   const allProviders: ProviderCatalogEntry[] = useMemo(() => {
     const customs: ProviderCatalogEntry[] = vault.customEndpoints.map((c) => ({
@@ -245,7 +246,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
         accountId: key.accountId,
         modelId,
         customEndpoint: customEp,
-        masterKey,
+        masterKey: masterKey.trim() || (localStorage.getItem('relaygate-master-key') || ''),
       });
       onUpdateVault({
         ...vault,
@@ -638,8 +639,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
             <button
               type="button"
               onClick={() => {
-                const stored = localStorage.getItem('relaygate-master-key') || '';
-                onMasterKeyChange(stored);
+                onMasterKeyChange(defaultMasterKeyRef.current || '');
               }}
               className="px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md whitespace-nowrap"
               title="Reset to the saved default master key"

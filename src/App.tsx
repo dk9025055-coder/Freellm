@@ -369,7 +369,7 @@ export default function App() {
               runtime={runtime}
               hasPin={hasPin}
               activePin={activePin}
-              masterKey={effectiveMasterKey}
+              masterKey={masterKey}
               onMasterKeyChange={setMasterKey}
               onUpdateVault={handleUpdateVault}
               onSetPin={handleSetPin}
@@ -384,7 +384,7 @@ export default function App() {
             <PlaygroundTab
               vault={vault}
               runtime={runtime}
-              masterKey={effectiveMasterKey}
+              masterKey={masterKey}
               onRefreshRuntime={refreshRuntime}
             />
           )}
