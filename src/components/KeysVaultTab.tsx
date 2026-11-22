@@ -179,23 +179,29 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
   }, [allProviders, filter, keysByProvider, runtime?.serverGeminiAvailable, search]);
 
   const handleAddKey = (provider: ProviderCatalogEntry) => {
-    const rawKey = newKeyValue.trim();
-    if (!rawKey) return;
+    const rawKeys = newKeyValue
+      .split(/[,\n]+/)
+      .map((k) => k.trim())
+      .filter(Boolean);
+    if (rawKeys.length === 0) return;
     const existingCount = (keysByProvider.get(provider.id) || []).length;
-    const keyObj: StoredApiKey = {
-      id: `key-${provider.id}-${Date.now().toString(36)}`,
+    const newKeyObjs: StoredApiKey[] = rawKeys.map((rawKey, i) => ({
+      id: `key-${provider.id}-${Date.now().toString(36)}-${i}`,
       providerId: provider.id,
-      label: newKeyLabel.trim() || `${provider.name} #${existingCount + 1}`,
+      label:
+        rawKeys.length === 1 && newKeyLabel.trim()
+          ? newKeyLabel.trim()
+          : `${provider.name} #${existingCount + i + 1}`,
       apiKey: rawKey,
       accountId: provider.requiresAccountId ? newAccountId.trim() : undefined,
       enabled: true,
       rpmLimit: provider.defaultRpmLimit,
       rpdLimit: provider.defaultRpdLimit,
       createdAt: Date.now(),
-    };
+    }));
     onUpdateVault({
       ...vault,
-      keys: [...vault.keys, keyObj],
+      keys: [...vault.keys, ...newKeyObjs],
     });
     setNewKeyLabel('');
     setNewKeyValue('');
@@ -383,16 +389,22 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
     };
 
     const nextKeys = [...vault.keys];
-    if (ceApiKey.trim() || ceAdapter === 'ollama') {
-      nextKeys.push({
-        id: `key-${id}-${Date.now().toString(36)}`,
-        providerId: id,
-        label: `${name} Primary`,
-        apiKey: ceApiKey.trim() || 'ollama',
-        enabled: true,
-        rpmLimit: 60,
-        rpdLimit: 10000,
-        createdAt: Date.now(),
+    const rawKeys = (ceApiKey.trim() || (ceAdapter === 'ollama' ? 'ollama' : ''))
+      .split(/[,\n]+/)
+      .map((k) => k.trim())
+      .filter(Boolean);
+    if (rawKeys.length > 0) {
+      rawKeys.forEach((rawKey, i) => {
+        nextKeys.push({
+          id: `key-${id}-${Date.now().toString(36)}-${i}`,
+          providerId: id,
+          label: rawKeys.length === 1 ? `${name} Primary` : `${name} #${i + 1}`,
+          apiKey: rawKey,
+          enabled: true,
+          rpmLimit: 60,
+          rpdLimit: 10000,
+          createdAt: Date.now(),
+        });
       });
     }
 
@@ -810,7 +822,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
                 type="password"
                 value={ceApiKey}
                 onChange={(e) => setCeApiKey(e.target.value)}
-                placeholder="API Key (optional for Ollama)"
+                placeholder="API Key(s) (comma/newline separated; optional for Ollama)"
                 className="px-3 py-2 text-xs font-mono rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
               />
             </div>
