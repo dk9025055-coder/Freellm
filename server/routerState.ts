@@ -288,9 +288,20 @@ class InMemoryRouterState {
 
   private getActiveKeys(): StoredApiKey[] {
     const enabled = this.keys.filter((k) => k.enabled && k.apiKey.trim().length > 0);
+
+    // Determine which providers the user has explicitly disabled (all of their keys disabled).
+    const providersWithKeys = new Set(this.keys.map((k) => k.providerId));
+    const disabledProviders = new Set<string>();
+    for (const pid of providersWithKeys) {
+      const providerKeys = this.keys.filter((k) => k.providerId === pid);
+      if (providerKeys.length > 0 && providerKeys.every((k) => !k.enabled)) {
+        disabledProviders.add(pid);
+      }
+    }
+
     // Include server-managed Gemini channel if process.env.GEMINI_API_KEY is present
-    // and user hasn't already provided a Gemini key (or as an automatic fallback!)
-    if (this.hasServerGeminiEnv()) {
+    // and the user hasn't disabled Gemini (all Gemini keys disabled).
+    if (this.hasServerGeminiEnv() && !disabledProviders.has('gemini')) {
       const serverKey: StoredApiKey = {
         id: SERVER_GEMINI_KEY_ID,
         providerId: 'gemini',
