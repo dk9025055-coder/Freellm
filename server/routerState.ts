@@ -615,6 +615,10 @@ class InMemoryRouterState {
   getProviderForTest(providerId: string): ProviderCatalogEntry | undefined {
     return getProviderById(providerId, this.customEndpoints, this.customModels);
   }
+
+  getCustomModels(): Record<string, string[]> {
+    return this.customModels;
+  }
 }
 
 export const routerState = new InMemoryRouterState();

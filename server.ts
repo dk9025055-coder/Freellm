@@ -209,7 +209,7 @@ app.post('/api/router/test-key', async (req: Request, res: Response) => {
 
     const provider =
       routerState.getProviderForTest(providerId) ||
-      getProviderById(providerId, customEndpoint ? [customEndpoint] : []);
+      getProviderById(providerId, customEndpoint ? [customEndpoint] : [], routerState.getCustomModels?.());
 
     if (!provider) {
       res.status(400).json({ ok: false, message: `Unknown provider "${providerId}"` });

@@ -225,6 +225,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
         apiKey: key.apiKey,
         accountId: key.accountId,
         customEndpoint: customEp,
+        masterKey,
       });
       onUpdateVault({
         ...vault,

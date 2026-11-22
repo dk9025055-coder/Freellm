@@ -76,6 +76,7 @@ export async function testProviderKeyLive(params: {
   accountId?: string;
   modelId?: string;
   customEndpoint?: CustomEndpoint;
+  masterKey?: string;
 }): Promise<{
   ok: boolean;
   status: number;
@@ -83,10 +84,49 @@ export async function testProviderKeyLive(params: {
   message: string;
   modelUsed: string;
 }> {
-  const res = await fetch('/api/router/test-key', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-  });
-  return res.json();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (params.masterKey && params.masterKey.trim()) {
+    headers['X-Router-Master-Key'] = params.masterKey.trim();
+    headers['Authorization'] = `Bearer ${params.masterKey.trim()}`;
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const res = await fetch('/api/router/test-key', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+      signal: controller.signal,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        latencyMs: 0,
+        message: data?.error?.message || data?.message || `HTTP ${res.status}`,
+        modelUsed: params.modelId || '',
+      };
+    }
+    return data;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      return {
+        ok: false,
+        status: 408,
+        latencyMs: 30000,
+        message: 'Test timed out after 30s',
+        modelUsed: params.modelId || '',
+      };
+    }
+    return {
+      ok: false,
+      status: 0,
+      latencyMs: 0,
+      message: err instanceof Error ? err.message : 'Network error',
+      modelUsed: params.modelId || '',
+    };
+  } finally {
+    clearTimeout(timer);
+  }
 }
