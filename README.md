@@ -63,6 +63,20 @@ docker run -p 7860:7860 --env-file .env relaygate
 
 The image is configured for Hugging Face Docker Spaces (port 7860, non-root UID 1000).
 
+## Deploy
+
+### Hugging Face Spaces (Docker)
+1. Create a Space with **SDK: Docker**.
+2. Push this repo (the included `Dockerfile` listens on `0.0.0.0:7860` as UID 1000, as HF requires).
+3. Set `ROUTER_MASTER_KEY` (and optionally `GEMINI_API_KEY`) in Space **Variables/Secrets**.
+4. The app is served at the Space URL; keys stay in the browser vault.
+
+### Render
+- This repo ships `render.yaml` (Render Blueprint). In Render: **New → Blueprint**, point at this repo, then fill in the secret env vars (`ROUTER_MASTER_KEY`, `GEMINI_API_KEY`, …) in the dashboard.
+- Render sets `PORT` automatically; the server reads `process.env.PORT`, so no port config is needed.
+- Health check: `/api/health`.
+- Free tier sleeps after ~15 min of inactivity (cold start on next request). Set `ROUTER_VAULT_JSON` (+ passphrase) if you want keys available immediately after a restart without browser sync.
+
 ## License
 
 See `LICENSE`.
