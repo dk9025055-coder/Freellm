@@ -220,10 +220,19 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
     setTestingKeyId(key.id);
     try {
       const customEp = vault.customEndpoints.find((c) => c.id === key.providerId);
+      const provider = allProviders.find((p) => p.id === key.providerId);
+      // Prefer manually added models (customModels) for the health check, then
+      // fall back to the provider's first chat-capable built-in model.
+      const manualModels = vault.customModels?.[key.providerId] || [];
+      const modelId =
+        manualModels[0] ||
+        provider?.models.find((m) => m.capabilities.includes('chat'))?.id ||
+        provider?.models[0]?.id;
       const res = await testProviderKeyLive({
         providerId: key.providerId,
         apiKey: key.apiKey,
         accountId: key.accountId,
+        modelId,
         customEndpoint: customEp,
         masterKey,
       });
