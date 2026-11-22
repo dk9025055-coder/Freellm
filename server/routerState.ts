@@ -1,4 +1,4 @@
-import { BUILTIN_PROVIDERS, DEFAULT_ROUTING_PROFILES, getProviderById, mergeCustomModelsIntoProvider } from '../shared/providers.ts';
+import { BUILTIN_PROVIDERS, DEFAULT_ROUTING_PROFILES, getProviderById, mergeProviderSettings } from '../shared/providers.ts';
 import type {
   CustomEndpoint,
   KeyUsageStats,
@@ -58,6 +58,7 @@ class InMemoryRouterState {
   private keys: StoredApiKey[] = [];
   private customEndpoints: CustomEndpoint[] = [];
   private customModels: Record<string, string[]> = {};
+  private providerPriorities: Record<string, number> = {};
   private profiles: RoutingProfile[] = [...DEFAULT_ROUTING_PROFILES];
   private syncedAt: number | null = null;
   private source: RouterRuntimeSnapshot['source'] = 'empty';
@@ -95,6 +96,10 @@ class InMemoryRouterState {
       payload.customModels && typeof payload.customModels === 'object'
         ? { ...payload.customModels }
         : {};
+    this.providerPriorities =
+      payload.providerPriorities && typeof payload.providerPriorities === 'object'
+        ? { ...payload.providerPriorities }
+        : {};
     this.profiles =
       Array.isArray(payload.profiles) && payload.profiles.length > 0
         ? payload.profiles.map((p) => ({ ...p, hops: [...p.hops] }))
@@ -118,6 +123,7 @@ class InMemoryRouterState {
     this.keys = [];
     this.customEndpoints = [];
     this.customModels = {};
+    this.providerPriorities = {};
     this.profiles = [...DEFAULT_ROUTING_PROFILES];
     this.syncedAt = null;
     this.cooldowns.clear();
@@ -271,7 +277,7 @@ class InMemoryRouterState {
       })),
     }));
     const merged = [...BUILTIN_PROVIDERS, ...customs].map((p) =>
-      mergeCustomModelsIntoProvider(p, this.customModels)
+      mergeProviderSettings(p, this.customModels, this.providerPriorities)
     );
     return merged;
   }
@@ -436,6 +442,9 @@ class InMemoryRouterState {
 
       if (modelStr === 'auto:fast') {
         rawCandidates.sort((a, b) => {
+          const priA = a.provider.priority ?? 50;
+          const priB = b.provider.priority ?? 50;
+          if (priB !== priA) return priB - priA;
           const mA = this.metrics.get(a.keyId);
           const mB = this.metrics.get(b.keyId);
           const latA = mA && mA.emaLatencyMs > 0 ? mA.emaLatencyMs : (105 - a.speedScore) * 35;
@@ -449,8 +458,11 @@ class InMemoryRouterState {
           rawCandidates = [...rawCandidates.slice(shift), ...rawCandidates.slice(0, shift)];
         }
       } else {
-        // Default `auto` (Smartest): sort by smartnessScore desc, preferring user keys before server fallback on tie
+        // Default `auto` (Smartest): sort by priority desc, then smartnessScore desc, preferring user keys before server fallback on tie
         rawCandidates.sort((a, b) => {
+          const priA = a.provider.priority ?? 50;
+          const priB = b.provider.priority ?? 50;
+          if (priB !== priA) return priB - priA;
           if (b.smartnessScore !== a.smartnessScore) return b.smartnessScore - a.smartnessScore;
           if (a.isServerEnvKey !== b.isServerEnvKey) return a.isServerEnvKey ? 1 : -1;
           return b.speedScore - a.speedScore;
@@ -613,7 +625,7 @@ class InMemoryRouterState {
   }
 
   getProviderForTest(providerId: string): ProviderCatalogEntry | undefined {
-    return getProviderById(providerId, this.customEndpoints, this.customModels);
+    return getProviderById(providerId, this.customEndpoints, this.customModels, this.providerPriorities);
   }
 
   getCustomModels(): Record<string, string[]> {

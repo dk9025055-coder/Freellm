@@ -19,7 +19,7 @@ import {
   Unlock,
   Upload,
 } from 'lucide-react';
-import { BUILTIN_PROVIDERS, mergeCustomModelsIntoProvider } from '../../shared/providers.ts';
+import { BUILTIN_PROVIDERS, mergeProviderSettings } from '../../shared/providers.ts';
 import type {
   CustomEndpoint,
   ProviderCatalogEntry,
@@ -140,7 +140,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
       })),
     }));
     return [...customs, ...BUILTIN_PROVIDERS].map((p) =>
-      mergeCustomModelsIntoProvider(p, vault.customModels)
+      mergeProviderSettings(p, vault.customModels, vault.providerPriorities)
     );
   }, [vault.customEndpoints, vault.customModels]);
 
@@ -1165,6 +1165,27 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
                             )}
                           </span>
                         )}
+                      </div>
+
+                      {/* Priority (%) for this provider */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          Priority:
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={vault.providerPriorities?.[provider.id] ?? 50}
+                          onChange={(e) => {
+                            const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                            const next = { ...(vault.providerPriorities || {}) };
+                            next[provider.id] = val;
+                            onUpdateVault({ ...vault, providerPriorities: next });
+                          }}
+                          className="w-16 px-2 py-1 text-xs font-mono rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                        />
+                        <span className="text-xs text-slate-400">%</span>
                       </div>
 
                       {/* Inline add model for this provider */}

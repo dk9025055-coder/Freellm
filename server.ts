@@ -163,6 +163,8 @@ app.post('/api/router/sync', requireMasterKeyIfSet, (req: Request, res: Response
       customEndpoints: Array.isArray(body.customEndpoints) ? body.customEndpoints : [],
       customModels:
         body.customModels && typeof body.customModels === 'object' ? body.customModels : {},
+      providerPriorities:
+        body.providerPriorities && typeof body.providerPriorities === 'object' ? body.providerPriorities : {},
       profiles: Array.isArray(body.profiles) ? body.profiles : [],
       defaultStrategy: body.defaultStrategy || 'auto',
     },

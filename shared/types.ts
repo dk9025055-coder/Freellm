@@ -34,6 +34,7 @@ export interface ProviderModel {
 export interface ProviderCatalogEntry {
   id: string;
   name: string;
+  priority?: number; // 0-100 routing priority (higher = preferred)
   adapter: ProviderAdapter;
   baseUrl: string;
   tier: ProviderTier;
@@ -99,6 +100,8 @@ export interface VaultPayload {
   customEndpoints: CustomEndpoint[];
   // Manually appended model IDs per provider (built-in or custom), persisted in the vault.
   customModels?: Record<string, string[]>;
+  // Routing priority percentage (0-100) per provider (higher = preferred).
+  providerPriorities?: Record<string, number>;
   profiles: RoutingProfile[];
   defaultStrategy: string;
 }

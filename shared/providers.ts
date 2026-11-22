@@ -1232,36 +1232,42 @@ export const DEFAULT_ROUTING_PROFILES: RoutingProfile[] = [
   },
 ];
 
-export function mergeCustomModelsIntoProvider(
+export function mergeProviderSettings(
   provider: ProviderCatalogEntry,
-  customModels?: Record<string, string[]>
+  customModels?: Record<string, string[]>,
+  providerPriorities?: Record<string, number>
 ): ProviderCatalogEntry {
   const extra = customModels?.[provider.id] || [];
-  if (!extra.length) return provider;
-  const existingIds = new Set(provider.models.map((m) => m.id));
-  const merged = [...provider.models];
-  for (const mid of extra) {
-    if (existingIds.has(mid)) continue;
-    existingIds.add(mid);
-    merged.push({
-      id: mid,
-      label: `${mid} (manual)`,
-      capabilities: ['chat', 'coding', 'tools'],
-      contextWindow: 128000,
-      smartnessScore: 80,
-      speedScore: 80,
-    });
+  let models = provider.models;
+  if (extra.length) {
+    const existingIds = new Set(provider.models.map((m) => m.id));
+    const merged = [...provider.models];
+    for (const mid of extra) {
+      if (existingIds.has(mid)) continue;
+      existingIds.add(mid);
+      merged.push({
+        id: mid,
+        label: `${mid} (manual)`,
+        capabilities: ['chat', 'coding', 'tools'],
+        contextWindow: 128000,
+        smartnessScore: 80,
+        speedScore: 80,
+      });
+    }
+    models = merged;
   }
-  return { ...provider, models: merged };
+  const priority = providerPriorities?.[provider.id];
+  return { ...provider, models, priority };
 }
 
 export function getProviderById(
   providerId: string,
   customEndpoints: Array<{ id: string; name: string; adapter: 'openai' | 'anthropic' | 'ollama'; baseUrl: string; models: string[]; extraHeaders?: Record<string, string> }> = [],
-  customModels?: Record<string, string[]>
+  customModels?: Record<string, string[]>,
+  providerPriorities?: Record<string, number>
 ): ProviderCatalogEntry | undefined {
   const builtin = BUILTIN_PROVIDERS.find((p) => p.id === providerId);
-  if (builtin) return mergeCustomModelsIntoProvider(builtin, customModels);
+  if (builtin) return mergeProviderSettings(builtin, customModels, providerPriorities);
   const custom = customEndpoints.find((c) => c.id === providerId);
   if (!custom) return undefined;
   const base = {
@@ -1287,5 +1293,5 @@ export function getProviderById(
       speedScore: 85,
     })),
   } as ProviderCatalogEntry;
-  return mergeCustomModelsIntoProvider(base, customModels);
+  return mergeProviderSettings(base, customModels, providerPriorities);
 }

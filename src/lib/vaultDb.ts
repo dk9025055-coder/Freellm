@@ -19,6 +19,7 @@ export function createEmptyVault(): VaultPayload {
     keys: [],
     customEndpoints: [],
     customModels: {},
+    providerPriorities: {},
     profiles: DEFAULT_ROUTING_PROFILES.map((p) => ({
       ...p,
       hops: p.hops.map((h) => ({ ...h })),
@@ -125,6 +126,10 @@ export async function decryptVaultPayload(
     customModels:
       parsed.customModels && typeof parsed.customModels === 'object'
         ? parsed.customModels
+        : {},
+    providerPriorities:
+      parsed.providerPriorities && typeof parsed.providerPriorities === 'object'
+        ? parsed.providerPriorities
         : {},
     profiles:
       Array.isArray(parsed.profiles) && parsed.profiles.length > 0
