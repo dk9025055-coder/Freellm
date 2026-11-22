@@ -113,6 +113,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
   // Custom endpoint model-edit state
   const [editingCustomModelsId, setEditingCustomModelsId] = useState<string | null>(null);
   const [editingCustomModelsValue, setEditingCustomModelsValue] = useState('');
+  const [inlineModelInput, setInlineModelInput] = useState<Record<string, string>>({});
 
   const allProviders: ProviderCatalogEntry[] = useMemo(() => {
     const customs: ProviderCatalogEntry[] = vault.customEndpoints.map((c) => ({
@@ -513,7 +514,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors whitespace-nowrap shrink-0"
             >
               <Server className="w-3.5 h-3.5" />
-              Add Custom Endpoint
+              Add Custom Provider
             </button>
             <button
               type="button"
@@ -759,7 +760,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
             className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3"
           >
             <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-              Add Custom OpenAI-Compatible, Anthropic-Compatible, or Local Ollama Endpoint
+              Add Custom AI Provider (name, protocol, base URL, models, key)
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <input
@@ -1142,6 +1143,39 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
                             )}
                           </span>
                         )}
+                      </div>
+
+                      {/* Inline add model for this provider */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <input
+                          type="text"
+                          value={inlineModelInput[provider.id] || ''}
+                          onChange={(e) =>
+                            setInlineModelInput((prev) => ({ ...prev, [provider.id]: e.target.value }))
+                          }
+                          placeholder={`Add a model ID to ${provider.name} (e.g. gemini-2.5-pro)`}
+                          className="px-2 py-1 text-xs font-mono rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-w-[220px]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const mid = (inlineModelInput[provider.id] || '').trim();
+                            if (!mid) return;
+                            const existing = vault.customModels?.[provider.id] || [];
+                            if (existing.includes(mid)) {
+                              setPanelMsg({ type: 'err', text: 'That model is already added.' });
+                              return;
+                            }
+                            const next = { ...(vault.customModels || {}) };
+                            next[provider.id] = [...existing, mid];
+                            onUpdateVault({ ...vault, customModels: next });
+                            setInlineModelInput((prev) => ({ ...prev, [provider.id]: '' }));
+                            setPanelMsg({ type: 'ok', text: `Added "${mid}" to ${provider.name}.` });
+                          }}
+                          className="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                        >
+                          Add Model
+                        </button>
                       </div>
 
                       {/* Existing Keys */}
