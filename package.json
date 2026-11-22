@@ -1,11 +1,15 @@
 {
-  "name": "react-example",
+  "name": "relaygate",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "RelayGate — Personal AI API Router: zero-disk, multi-surface OpenAI/Anthropic/Gemini-compatible gateway with automatic 429/5xx failover over 29+ free-tier AI providers.",
   "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "dev": "tsx server.ts",
-    "start": "node server.ts",
+    "start": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
@@ -28,7 +32,6 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",

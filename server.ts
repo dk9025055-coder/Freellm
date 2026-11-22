@@ -927,4 +927,10 @@ async function startServer() {
   });
 }
 
+if (!process.env.ROUTER_MASTER_KEY?.trim()) {
+  console.warn(
+    '[RelayGate] ROUTER_MASTER_KEY is not set — /api/router/sync, /api/router/clear and /v1/* endpoints are UNPROTECTED. Set ROUTER_MASTER_KEY before deploying to production.'
+  );
+}
+
 startServer();
