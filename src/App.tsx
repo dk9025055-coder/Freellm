@@ -58,7 +58,16 @@ export default function App() {
   const [activePin, setActivePin] = useState<string | null>(null);
   const [vault, setVault] = useState<VaultPayload>(() => createEmptyVault());
   const [vaultDirty, setVaultDirty] = useState(false);
-  const [masterKey, setMasterKey] = useState('');
+
+  const [masterKey, setMasterKey] = useState(() => localStorage.getItem('relaygate-master-key') || '');
+  const effectiveMasterKey = masterKey.trim() || (localStorage.getItem('relaygate-master-key') || '');
+
+  // Persist a non-empty master key so clearing the field keeps the previous one.
+  useEffect(() => {
+    if (masterKey.trim()) {
+      localStorage.setItem('relaygate-master-key', masterKey.trim());
+    }
+  }, [masterKey]);
 
   // Server RAM state + IndexedDB usage archive
   const [runtime, setRuntime] = useState<RouterRuntimeSnapshot | null>(null);
@@ -180,7 +189,7 @@ export default function App() {
     const v = vaultOverride || vault;
     setSyncing(true);
     try {
-      const res = await syncVaultToServerRam(v, masterKey);
+      const res = await syncVaultToServerRam(v, effectiveMasterKey);
       setRuntime(res.snapshot);
       setVaultDirty(false);
       showNotice(
@@ -196,7 +205,7 @@ export default function App() {
 
   const handleClearServerRam = async () => {
     try {
-      const res = await clearServerRam(masterKey);
+      const res = await clearServerRam(effectiveMasterKey);
       setRuntime(res.snapshot);
       showNotice('ok', 'Cleared all synced keys from Express server RAM.');
     } catch (err) {
@@ -360,7 +369,7 @@ export default function App() {
               runtime={runtime}
               hasPin={hasPin}
               activePin={activePin}
-              masterKey={masterKey}
+              masterKey={effectiveMasterKey}
               onMasterKeyChange={setMasterKey}
               onUpdateVault={handleUpdateVault}
               onSetPin={handleSetPin}
@@ -375,7 +384,7 @@ export default function App() {
             <PlaygroundTab
               vault={vault}
               runtime={runtime}
-              masterKey={masterKey}
+              masterKey={effectiveMasterKey}
               onRefreshRuntime={refreshRuntime}
             />
           )}
