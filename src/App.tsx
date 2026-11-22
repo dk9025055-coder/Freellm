@@ -176,10 +176,11 @@ export default function App() {
     setLocked(true);
   };
 
-  const handleSyncNow = async () => {
+  const handleSyncNow = async (vaultOverride?: VaultPayload) => {
+    const v = vaultOverride || vault;
     setSyncing(true);
     try {
-      const res = await syncVaultToServerRam(vault, masterKey);
+      const res = await syncVaultToServerRam(v, masterKey);
       setRuntime(res.snapshot);
       setVaultDirty(false);
       showNotice(
@@ -317,7 +318,7 @@ export default function App() {
             </button>
             <button
               type="button"
-              onClick={handleSyncNow}
+              onClick={() => handleSyncNow()}
               disabled={syncing}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg transition-colors whitespace-nowrap shrink-0"
             >

@@ -40,7 +40,7 @@ interface KeysVaultTabProps {
   onUpdateVault: (next: VaultPayload) => void;
   onSetPin: (newPin: string | null) => Promise<void>;
   onLockNow: () => void;
-  onSyncNow: () => Promise<void>;
+  onSyncNow: (vaultOverride?: VaultPayload) => Promise<void>;
   onClearServerRam: () => Promise<void>;
   syncing: boolean;
 }
@@ -209,17 +209,22 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
   };
 
   const handleToggleKey = (keyId: string) => {
-    onUpdateVault({
+    const next = {
       ...vault,
       keys: vault.keys.map((k) => (k.id === keyId ? { ...k, enabled: !k.enabled } : k)),
-    });
+    };
+    onUpdateVault(next);
+    // Push the change to server RAM immediately so disabled keys stop being used.
+    void onSyncNow(next);
   };
 
   const handleDeleteKey = (keyId: string) => {
-    onUpdateVault({
+    const next = {
       ...vault,
       keys: vault.keys.filter((k) => k.id !== keyId),
-    });
+    };
+    onUpdateVault(next);
+    void onSyncNow(next);
   };
 
   const handleTestKey = async (key: StoredApiKey) => {
@@ -520,7 +525,7 @@ export const KeysVaultTab: React.FC<KeysVaultTabProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={onSyncNow}
+              onClick={() => onSyncNow()}
               disabled={syncing}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg transition-colors whitespace-nowrap shrink-0"
             >
