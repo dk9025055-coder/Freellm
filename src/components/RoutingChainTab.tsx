@@ -9,7 +9,7 @@ import {
   Terminal,
   Trash2,
 } from 'lucide-react';
-import { BUILTIN_PROVIDERS, getProviderById } from '../../shared/providers.ts';
+import { BUILTIN_PROVIDERS, getProviderById, mergeProviderSettings } from '../../shared/providers.ts';
 import type {
   ChainHop,
   ProviderCatalogEntry,
@@ -70,8 +70,10 @@ export const RoutingChainTab: React.FC<RoutingChainTabProps> = ({
         speedScore: 85,
       })),
     }));
-    return [...BUILTIN_PROVIDERS, ...customEntries];
-  }, [vault.customEndpoints]);
+    return [...BUILTIN_PROVIDERS, ...customEntries].map((p) =>
+      mergeProviderSettings(p, vault.customModels, vault.providerPriorities)
+    );
+  }, [vault.customEndpoints, vault.customModels, vault.providerPriorities]);
 
   const activeProfile: RoutingProfile | undefined =
     vault.profiles.find((p) => p.id === selectedProfileId) || vault.profiles[0];
