@@ -477,7 +477,7 @@ gemini --model auto`,
                 </div>
               ) : (
                 activeProfile.hops.map((hop, idx) => {
-                  const prov = getProviderById(hop.providerId, vault.customEndpoints);
+                  const prov = getProviderById(hop.providerId, vault.customEndpoints, vault.customModels);
                   const hasActiveKey = activeProviderIds.has(hop.providerId);
                   return (
                     <div

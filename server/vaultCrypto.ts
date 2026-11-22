@@ -61,6 +61,10 @@ export function parseStartupVaultJson(
         customEndpoints: Array.isArray(parsed.customEndpoints)
           ? parsed.customEndpoints
           : [],
+        customModels:
+          parsed.customModels && typeof parsed.customModels === 'object'
+            ? parsed.customModels
+            : {},
         profiles: Array.isArray(parsed.profiles) ? parsed.profiles : [],
         defaultStrategy: parsed.defaultStrategy || 'auto',
       };

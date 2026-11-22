@@ -1232,15 +1232,39 @@ export const DEFAULT_ROUTING_PROFILES: RoutingProfile[] = [
   },
 ];
 
+export function mergeCustomModelsIntoProvider(
+  provider: ProviderCatalogEntry,
+  customModels?: Record<string, string[]>
+): ProviderCatalogEntry {
+  const extra = customModels?.[provider.id] || [];
+  if (!extra.length) return provider;
+  const existingIds = new Set(provider.models.map((m) => m.id));
+  const merged = [...provider.models];
+  for (const mid of extra) {
+    if (existingIds.has(mid)) continue;
+    existingIds.add(mid);
+    merged.push({
+      id: mid,
+      label: `${mid} (manual)`,
+      capabilities: ['chat', 'coding', 'tools'],
+      contextWindow: 128000,
+      smartnessScore: 80,
+      speedScore: 80,
+    });
+  }
+  return { ...provider, models: merged };
+}
+
 export function getProviderById(
   providerId: string,
-  customEndpoints: Array<{ id: string; name: string; adapter: 'openai' | 'anthropic' | 'ollama'; baseUrl: string; models: string[]; extraHeaders?: Record<string, string> }> = []
+  customEndpoints: Array<{ id: string; name: string; adapter: 'openai' | 'anthropic' | 'ollama'; baseUrl: string; models: string[]; extraHeaders?: Record<string, string> }> = [],
+  customModels?: Record<string, string[]>
 ): ProviderCatalogEntry | undefined {
   const builtin = BUILTIN_PROVIDERS.find((p) => p.id === providerId);
-  if (builtin) return builtin;
+  if (builtin) return mergeCustomModelsIntoProvider(builtin, customModels);
   const custom = customEndpoints.find((c) => c.id === providerId);
   if (!custom) return undefined;
-  return {
+  const base = {
     id: custom.id,
     name: custom.name,
     adapter: custom.adapter,
@@ -1262,5 +1286,6 @@ export function getProviderById(
       smartnessScore: 85,
       speedScore: 85,
     })),
-  };
+  } as ProviderCatalogEntry;
+  return mergeCustomModelsIntoProvider(base, customModels);
 }

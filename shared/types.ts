@@ -97,6 +97,8 @@ export interface VaultPayload {
   updatedAt: number;
   keys: StoredApiKey[];
   customEndpoints: CustomEndpoint[];
+  // Manually appended model IDs per provider (built-in or custom), persisted in the vault.
+  customModels?: Record<string, string[]>;
   profiles: RoutingProfile[];
   defaultStrategy: string;
 }

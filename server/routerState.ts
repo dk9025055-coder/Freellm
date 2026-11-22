@@ -1,4 +1,4 @@
-import { BUILTIN_PROVIDERS, DEFAULT_ROUTING_PROFILES, getProviderById } from '../shared/providers.ts';
+import { BUILTIN_PROVIDERS, DEFAULT_ROUTING_PROFILES, getProviderById, mergeCustomModelsIntoProvider } from '../shared/providers.ts';
 import type {
   CustomEndpoint,
   KeyUsageStats,
@@ -57,6 +57,7 @@ function utcDayKey(now = Date.now()): string {
 class InMemoryRouterState {
   private keys: StoredApiKey[] = [];
   private customEndpoints: CustomEndpoint[] = [];
+  private customModels: Record<string, string[]> = {};
   private profiles: RoutingProfile[] = [...DEFAULT_ROUTING_PROFILES];
   private syncedAt: number | null = null;
   private source: RouterRuntimeSnapshot['source'] = 'empty';
@@ -90,6 +91,10 @@ class InMemoryRouterState {
   syncVault(payload: VaultPayload, source: 'browser-sync' | 'env-vault') {
     this.keys = (payload.keys || []).map((k) => ({ ...k }));
     this.customEndpoints = (payload.customEndpoints || []).map((c) => ({ ...c }));
+    this.customModels =
+      payload.customModels && typeof payload.customModels === 'object'
+        ? { ...payload.customModels }
+        : {};
     this.profiles =
       Array.isArray(payload.profiles) && payload.profiles.length > 0
         ? payload.profiles.map((p) => ({ ...p, hops: [...p.hops] }))
@@ -112,6 +117,7 @@ class InMemoryRouterState {
   clearRam() {
     this.keys = [];
     this.customEndpoints = [];
+    this.customModels = {};
     this.profiles = [...DEFAULT_ROUTING_PROFILES];
     this.syncedAt = null;
     this.cooldowns.clear();
@@ -264,7 +270,10 @@ class InMemoryRouterState {
         speedScore: 85,
       })),
     }));
-    return [...BUILTIN_PROVIDERS, ...customs];
+    const merged = [...BUILTIN_PROVIDERS, ...customs].map((p) =>
+      mergeCustomModelsIntoProvider(p, this.customModels)
+    );
+    return merged;
   }
 
   getProfiles(): RoutingProfile[] {
@@ -604,7 +613,7 @@ class InMemoryRouterState {
   }
 
   getProviderForTest(providerId: string): ProviderCatalogEntry | undefined {
-    return getProviderById(providerId, this.customEndpoints);
+    return getProviderById(providerId, this.customEndpoints, this.customModels);
   }
 }
 
